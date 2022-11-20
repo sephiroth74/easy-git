@@ -29,9 +29,39 @@ abstract class GitCommand<T>(protected val repo: Repository) : Callable<T> {
         fun toList(): List<String> = array.toList()
     }
 
+    // ----------------------------------------------------
+    // region Params
+
     internal class GitNameParam(name: String) : GitNullableParam(name) {
         override fun asQueryString(): String? {
             return if (isPreset) name else null
+        }
+    }
+
+    class RevisionRangeParam private constructor(
+        private val first: String = Repository.HEAD,
+        private val second: String? = null,
+        private val type: RangeType = RangeType.Single
+    ) : GitParam {
+
+        override fun asQueryString(): String {
+            return when (type) {
+                RangeType.Single -> first
+                RangeType.Range -> "$first..$second"
+                RangeType.Symmetric -> "$first...$second"
+            }
+        }
+
+        enum class RangeType {
+            Single, Range, Symmetric
+        }
+
+        companion object {
+            fun head() = RevisionRangeParam()
+            fun from(value: String) = RevisionRangeParam(value, null, RangeType.Single)
+            fun range(from: String, to: String) = RevisionRangeParam(from, to, RangeType.Range)
+            fun simmetric(first: String, second: String) =
+                RevisionRangeParam(first, second, RangeType.Symmetric)
         }
     }
 
@@ -122,7 +152,7 @@ abstract class GitCommand<T>(protected val repo: Repository) : Callable<T> {
         }
     }
 
-    abstract class GitNullableParam(val name: String) : GitParam {
+    internal abstract class GitNullableParam(val name: String) : GitParam {
         var isPreset: Boolean = false
             protected set
 
@@ -134,4 +164,5 @@ abstract class GitCommand<T>(protected val repo: Repository) : Callable<T> {
         fun asQueryString(): String?
     }
 
+    // endregion Params
 }

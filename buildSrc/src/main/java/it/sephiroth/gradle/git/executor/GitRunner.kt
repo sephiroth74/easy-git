@@ -10,16 +10,36 @@ import java.util.*
 import java.util.concurrent.Callable
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
-import java.util.concurrent.ThreadPoolExecutor
 
-class GitRunner(private val process: Process, val id: Int = 0) : AutoCloseable,
-    Comparable<GitRunner> {
+class GitRunner(
+    proc: Process? = null,
+    val tag: Any? = null,
+) : AutoCloseable {
 
-    override fun compareTo(other: GitRunner): Int {
-        return id.compareTo(other.id)
+    constructor(builder: ProcessBuilder, tag: String?) : this(null, tag) {
+        this.processBuilder = builder
+    }
+
+    private var processBuilder: ProcessBuilder? = null
+
+    private lateinit var process: Process
+
+    init {
+        proc?.let {
+            check(processBuilder == null)
+            process = it
+        }
     }
 
     fun await(): GitRunner {
+        processBuilder?.let { builder ->
+            logger.quiet(
+                "Executing `${
+                    builder.command().joinToString(" ")
+                }` on ${Thread.currentThread()}"
+            )
+            process = builder.start()
+        }
         process.waitFor()
         return this
     }
@@ -99,7 +119,8 @@ class GitRunner(private val process: Process, val id: Int = 0) : AutoCloseable,
 
     companion object {
         private val logger: Logger = Logging.getLogger(GitRunner::class.java)
-        private val executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors())
+        private val executor =
+            Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors())
 
         @Throws(IOException::class)
         fun execute(cmd: String): GitRunner {
@@ -107,17 +128,16 @@ class GitRunner(private val process: Process, val id: Int = 0) : AutoCloseable,
             return GitRunner(Runtime.getRuntime().exec(cmd.trim()))
         }
 
-        fun execute(vararg processes: ProcessBuilder): Iterable<Future<GitRunner>> {
-            return executor.invokeAll(processes.mapIndexed { index, builder ->
+        fun execute(vararg processes: GitRunner): Iterable<Future<GitRunner>> {
+            return executor.invokeAll(processes.mapIndexed { _, runner ->
                 Callable {
-                    logger.quiet("Executing `${builder.command().joinToString(" ")}`...")
-                    GitRunner(builder.start(), index).await().assertNoErrors()
+                    runner.await().assertNoErrors()
                 }
             })
         }
 
         @Throws(IOException::class)
-        fun create(command: String): ProcessBuilder {
+        fun create(command: String, tag: String? = null): GitRunner {
             return if (command.isEmpty()) {
                 throw IllegalArgumentException("Empty command")
             } else {
@@ -128,7 +148,7 @@ class GitRunner(private val process: Process, val id: Int = 0) : AutoCloseable,
                     cmdArray[i] = st.nextToken()
                     ++i
                 }
-                ProcessBuilder(*cmdArray)
+                GitRunner(ProcessBuilder(*cmdArray), tag)
             }
         }
     }

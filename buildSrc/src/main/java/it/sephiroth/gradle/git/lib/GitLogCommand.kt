@@ -1,13 +1,15 @@
 package it.sephiroth.gradle.git.lib
 
 import it.sephiroth.gradle.git.executor.GitRunner
+import it.sephiroth.gradle.git.vo.LogCommit
 import java.time.OffsetDateTime
 import java.util.regex.Pattern
 
 /**
- * @see <a href="">git log</a>
+ * @see <a href="https://git-scm.com/docs/git-log">git log</a>
  */
-class GitLogCommand(repo: Repository) : GitCommand<Iterable<Commit>>(repo) {
+@Suppress("unused")
+class GitLogCommand(repo: Repository) : GitCommand<Iterable<LogCommit>>(repo) {
 
     // ----------------------------------------------------
     // region git arguments
@@ -48,7 +50,7 @@ class GitLogCommand(repo: Repository) : GitCommand<Iterable<Commit>>(repo) {
 
     fun range(value: RevisionRangeParam) = apply { revisionRange = value }
 
-    override fun call(): Iterable<Commit> {
+    override fun call(): Iterable<LogCommit> {
         val paramsBuilder = ParamsBuilder().apply {
             addAll(reflog, maxCount, skip, since, until, author, commmitter, firstParent)
             addAll(maxParents, minParents, merges, noMerges)
@@ -57,90 +59,34 @@ class GitLogCommand(repo: Repository) : GitCommand<Iterable<Commit>>(repo) {
 
         val cmd = "git --no-pager log"
 
-        val subjects = Commit.CommitLineType.values().map { it.value to it.format }
+        val subjects = LogCommit.CommitLineType.values().map { it.value to it.format }
 
-        val runners = subjects.mapIndexed { index, pair ->
+        val runners: List<GitRunner> = subjects.mapIndexed { _, pair ->
             val title = pair.first
             val format = pair.second
-            GitRunner.create("$cmd $paramsBuilder --pretty=format:$title:$format")
+            GitRunner.create("$cmd $paramsBuilder --pretty=format:$title:$format", title)
         }
 
-        val result = hashMapOf<Int, Commit>()
+        val result = hashMapOf<Int, LogCommit>()
 
         GitRunner.execute(*runners.toTypedArray())
             .map { it.get() }
-            .sortedBy { it.id }
-            .forEach {
-                it.readLines().mapIndexed { index, line ->
-                    val commit = result.getOrPut(index) { Commit() }
-                    val (type, text) = line.split(":".toRegex(), limit = 2)
-                    commit.load(type, text)
+            .forEach { runner ->
+                val tag: String = runner.tag as String
+                val regexp =
+                    Pattern.compile("^($tag):(.*)", Pattern.DOTALL).toRegex()
+
+                runner.readLines().mapIndexed { index, line ->
+                    val commit = result.getOrPut(index) { LogCommit() }
+//                    val (type, text) = line.split(":".toRegex(), limit = 2)
+
+                    regexp.matchEntire(line)?.let { match ->
+                        commit.load(tag, match.groupValues[2])
+                    }
                 }
             }
 
-
         return result.values
     }
-
-    data class RevisionRangeParam private constructor(
-        private val first: String = Repository.HEAD,
-        private val second: String? = null,
-        private val type: RangeType = RangeType.Single
-    ) : GitParam {
-
-        override fun asQueryString(): String {
-            return when (type) {
-                RangeType.Single -> first
-                RangeType.Range -> "$first..$second"
-                RangeType.Symmetric -> "$first...$second"
-            }
-        }
-
-        enum class RangeType {
-            Single, Range, Symmetric
-        }
-
-        companion object {
-            fun head() = RevisionRangeParam()
-            fun from(value: String) = RevisionRangeParam(value, null, RangeType.Single)
-            fun range(from: String, to: String) = RevisionRangeParam(from, to, RangeType.Range)
-            fun simmetric(first: String, second: String) =
-                RevisionRangeParam(first, second, RangeType.Symmetric)
-        }
-    }
 }
 
-class Commit {
-    val values: MutableMap<CommitLineType, String?> = mutableMapOf()
-
-    fun get(type: CommitLineType): String? = values[type]
-
-    fun set(key: CommitLineType, value: String?) {
-        values[key] = value
-    }
-
-    fun entries() = values.entries
-
-    fun load(type: String, text: String) = set(CommitLineType.of(type), text)
-    override fun toString(): String {
-        return "Commit(${values.map { "${it.key.value}: ${it.value}" }.joinToString(", ")})"
-    }
-
-
-    enum class CommitLineType(val value: String, val format: String) {
-        Commit("commit", "%H"),
-        Tree("tree", "%T"),
-        Parent("parent", "%P"),
-        Subject("subject", "%s"),
-        Author("author", "%an"),
-        Email("email", "%aE"),
-        Date("date", "%ai"),
-        Tags("tags", "%D");
-
-        companion object {
-            fun of(string: String): CommitLineType {
-                return values().first { it.value == string }
-            }
-        }
-    }
-}

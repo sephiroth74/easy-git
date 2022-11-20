@@ -170,7 +170,7 @@ tasks.create("testGit") {
         logger.lifecycle("git log --pretty=oneline 735e044..HEAD")
 
         git.log.range("735e044", "HEAD").call().forEach { commit ->
-            logger.lifecycle("\tCommit{")
+            logger.lifecycle("\tLogCommit{")
             commit.entries().forEach { logger.lifecycle("\t\t${it.key.value}: ${it.value}") }
             logger.lifecycle("\t}")
         }
