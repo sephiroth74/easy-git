@@ -10,7 +10,7 @@ class Repository(val repoDir: File) {
 
     fun resolve(commitId: String = HEAD) = GitRevParseCommand(this).commitId(commitId)
 
-    fun list() = GitLsRemoteCommand(this)
+    fun lsRemote() = GitLsRemoteCommand(this)
 
     fun checkout() = GitCheckoutCommand(this)
 

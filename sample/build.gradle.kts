@@ -2,6 +2,7 @@ import it.sephiroth.gradle.git.api.Git
 import it.sephiroth.gradle.git.lib.GitBranchListCommand.BranchMode
 import it.sephiroth.gradle.git.lib.Repository
 
+
 val git = Git.open(rootDir)
 
 tasks.create("testGit") {

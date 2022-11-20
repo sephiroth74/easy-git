@@ -1,4 +1,7 @@
+import it.sephiroth.gradle.git.api.Git
+import it.sephiroth.gradle.git.lib.Repository
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import java.util.Date
 
 plugins {
     `kotlin-dsl`
@@ -8,40 +11,30 @@ plugins {
     `maven-publish`
 }
 
-val SONATYPE_RELEASE_URL: String by project
-val SONATYPE_SNAPSHOT_URL: String by project
+val SONATYPE_RELEASE_URL: String by rootProject
+val SONATYPE_SNAPSHOT_URL: String by rootProject
 
-val projectGroupId: String by project
-val projectVersion: String by project
-val projectName: String by project
-val artifactId: String by project
+val projectGroupId: String by rootProject
+val projectVersion: String by rootProject
+val projectName: String by rootProject
+val artifactId: String by rootProject
 
-val pomDescription: String by project
-val pomLicenseUrl: String by project
-val pomLicenseName: String by project
-val pomDeveloperId: String by project
-val pomDeveloperName: String by project
-val pomDeveloperEmail: String by project
+val pomDescription: String by rootProject
+val pomLicenseUrl: String by rootProject
+val pomLicenseName: String by rootProject
+val pomDeveloperId: String by rootProject
+val pomDeveloperName: String by rootProject
+val pomDeveloperEmail: String by rootProject
 
-val scmUrl: String by project
-val scmDeveloperConnection: String by project
-val scmConnection: String by project
+val scmUrl: String by rootProject
+val scmDeveloperConnection: String by rootProject
+val scmConnection: String by rootProject
 
 project.version = projectVersion
 project.group = projectGroupId
 
 
 tasks {
-    val sourcesJar by creating(Jar::class) {
-        archiveClassifier.set("sources")
-    }
-
-    val javadocJar by creating(Jar::class) {
-        archiveClassifier.set("javadoc")
-        dependsOn.add(javadoc)
-        from(javadoc)
-    }
-
     artifacts {
         archives(jar)
     }
@@ -120,6 +113,14 @@ if (project.hasProperty("sonatypeUsername")
     }
 }
 
+sourceSets {
+    main {
+        java {
+            srcDir(file("../buildSrc/src/main/java"))
+        }
+    }
+}
+
 java {
     sourceCompatibility = JavaVersion.VERSION_11
     targetCompatibility = JavaVersion.VERSION_11
@@ -142,3 +143,18 @@ tasks.withType<KotlinCompile> {
     }
 }
 
+// test task //
+
+tasks.create("testGit") {
+    doLast {
+        val git = Git.open(rootDir)
+        logger.lifecycle("git => $git")
+        logger.lifecycle("version = ${Git.VERSION}, buildTime = ${Date(Git.Companion.BUILD_DATE)}")
+
+        val commitHash = git.repository.resolve(Repository.HEAD).call().first()
+        logger.lifecycle("commit hash => $commitHash")
+
+        val remotes = git.repository.lsRemote().tags().refs().call()
+        logger.lifecycle("ls-remote => $remotes")
+    }
+}
