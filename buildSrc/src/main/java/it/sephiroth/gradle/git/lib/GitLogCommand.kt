@@ -2,11 +2,12 @@ package it.sephiroth.gradle.git.lib
 
 import it.sephiroth.gradle.git.executor.GitRunner
 import java.time.OffsetDateTime
+import java.util.regex.Pattern
 
 /**
  * @see <a href="">git log</a>
  */
-class GitLogCommand(repo: Repository) : GitCommand<List<String>>(repo) {
+class GitLogCommand(repo: Repository) : GitCommand<Iterable<Commit>>(repo) {
 
     // ----------------------------------------------------
     // region git arguments
@@ -21,6 +22,7 @@ class GitLogCommand(repo: Repository) : GitCommand<List<String>>(repo) {
     private val merges = GitNameParam("--merges")
     private val noMerges = GitNameParam("--no-merges")
     private val reflog = GitNameParam("--reflog")
+    private val firstParent = GitNameParam("--first-parent")
 
     private val minParents = GitNameValueParam<Int>("--min-parents")
     private val maxParents = GitNameValueParam<Int>("--max-parents")
@@ -29,6 +31,7 @@ class GitLogCommand(repo: Repository) : GitCommand<List<String>>(repo) {
 
     // endregion git arguments
 
+    fun firstParent() = apply { firstParent.set() }
     fun reflog() = apply { reflog.set() }
     fun maxCount(value: Int) = apply { maxCount.set(value) }
     fun skip(value: Int) = apply { skip.set(value) }
@@ -45,39 +48,38 @@ class GitLogCommand(repo: Repository) : GitCommand<List<String>>(repo) {
 
     fun range(value: RevisionRangeParam) = apply { revisionRange = value }
 
-    override fun call(): List<String> {
+    override fun call(): Iterable<Commit> {
         val paramsBuilder = ParamsBuilder().apply {
-            addAll(reflog, maxCount, skip, since, until, author, commmitter)
+            addAll(reflog, maxCount, skip, since, until, author, commmitter, firstParent)
             addAll(maxParents, minParents, merges, noMerges)
             add(revisionRange)
         }
 
-        val subjects = listOf<Pair<String, String>>(
-            "commit" to "%H",
-            "tree" to "%T",
-            "parent" to "%P",
-            "subject" to "%s",
-            "author" to "%an <%ae> %ai",
-            "name" to "%(describe:abbrev=4,tags=true)",
-            "tags" to "%D"
-        )
-
         val cmd = "git --no-pager log"
 
-        // git --no-pager log -n1 --pretty=
-        // format:'{%n  "commit":"%H",%n  "tree":"%T",%n  "parent":"%P",%n "subject":"%s",%n  "body":"%b",%n  "author":{%n    "name":"%aN",%n    "email":"%aE",%n    "date":"%ai"%n  }%n
-        // "name":"%(describe:abbrev=4,tags=true)"%n  "tags":"%D" %n},'
+        val subjects = Commit.CommitLineType.values().map { it.value to it.format }
 
-        subjects.forEach { pair ->
+        val runners = subjects.mapIndexed { index, pair ->
             val title = pair.first
             val format = pair.second
-            val text = GitRunner.execute("$cmd --pretty=format:$format $paramsBuilder").await().assertNoErrors()
-                .readText(GitRunner.StdOutput.Output)
-            println("text => $text")
-
+            GitRunner.create("$cmd $paramsBuilder --pretty=format:$title:$format")
         }
 
-        return emptyList()
+        val result = hashMapOf<Int, Commit>()
+
+        GitRunner.execute(*runners.toTypedArray())
+            .map { it.get() }
+            .sortedBy { it.id }
+            .forEach {
+                it.readLines().mapIndexed { index, line ->
+                    val commit = result.getOrPut(index) { Commit() }
+                    val (type, text) = line.split(":".toRegex(), limit = 2)
+                    commit.load(type, text)
+                }
+            }
+
+
+        return result.values
     }
 
     data class RevisionRangeParam private constructor(
@@ -102,8 +104,43 @@ class GitLogCommand(repo: Repository) : GitCommand<List<String>>(repo) {
             fun head() = RevisionRangeParam()
             fun from(value: String) = RevisionRangeParam(value, null, RangeType.Single)
             fun range(from: String, to: String) = RevisionRangeParam(from, to, RangeType.Range)
-            fun simmetric(first: String, second: String) = RevisionRangeParam(first, second, RangeType.Symmetric)
+            fun simmetric(first: String, second: String) =
+                RevisionRangeParam(first, second, RangeType.Symmetric)
         }
     }
 }
 
+class Commit {
+    val values: MutableMap<CommitLineType, String?> = mutableMapOf()
+
+    fun get(type: CommitLineType): String? = values[type]
+
+    fun set(key: CommitLineType, value: String?) {
+        values[key] = value
+    }
+
+    fun entries() = values.entries
+
+    fun load(type: String, text: String) = set(CommitLineType.of(type), text)
+    override fun toString(): String {
+        return "Commit(${values.map { "${it.key.value}: ${it.value}" }.joinToString(", ")})"
+    }
+
+
+    enum class CommitLineType(val value: String, val format: String) {
+        Commit("commit", "%H"),
+        Tree("tree", "%T"),
+        Parent("parent", "%P"),
+        Subject("subject", "%s"),
+        Author("author", "%an"),
+        Email("email", "%aE"),
+        Date("date", "%ai"),
+        Tags("tags", "%D");
+
+        companion object {
+            fun of(string: String): CommitLineType {
+                return values().first { it.value == string }
+            }
+        }
+    }
+}

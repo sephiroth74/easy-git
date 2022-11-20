@@ -7,8 +7,17 @@ import java.io.IOException
 import java.io.InputStream
 import java.nio.charset.Charset
 import java.util.*
+import java.util.concurrent.Callable
+import java.util.concurrent.Executors
+import java.util.concurrent.Future
+import java.util.concurrent.ThreadPoolExecutor
 
-class GitRunner(private val process: Process) : AutoCloseable {
+class GitRunner(private val process: Process, val id: Int = 0) : AutoCloseable,
+    Comparable<GitRunner> {
+
+    override fun compareTo(other: GitRunner): Int {
+        return id.compareTo(other.id)
+    }
 
     fun await(): GitRunner {
         process.waitFor()
@@ -90,11 +99,21 @@ class GitRunner(private val process: Process) : AutoCloseable {
 
     companion object {
         private val logger: Logger = Logging.getLogger(GitRunner::class.java)
+        private val executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors())
 
         @Throws(IOException::class)
         fun execute(cmd: String): GitRunner {
             logger.quiet("Executing `${cmd.trim()}`...")
             return GitRunner(Runtime.getRuntime().exec(cmd.trim()))
+        }
+
+        fun execute(vararg processes: ProcessBuilder): Iterable<Future<GitRunner>> {
+            return executor.invokeAll(processes.mapIndexed { index, builder ->
+                Callable {
+                    logger.quiet("Executing `${builder.command().joinToString(" ")}`...")
+                    GitRunner(builder.start(), index).await().assertNoErrors()
+                }
+            })
         }
 
         @Throws(IOException::class)

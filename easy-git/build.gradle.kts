@@ -167,8 +167,13 @@ tasks.create("testGit") {
         logger.lifecycle("\trev-list => $prevCommit")
         logger.lifecycle("\tdescribe = " + git.repository.describe(prevCommit).abbrev(0).tags().call())
 
-        logger.lifecycle("log $lastCommit..$prevCommit")
-        git.log.range(lastCommit, prevCommit).call()
+        logger.lifecycle("git log --pretty=oneline 735e044..HEAD")
+
+        git.log.range("735e044", "HEAD").call().forEach { commit ->
+            logger.lifecycle("\tCommit{")
+            commit.entries().forEach { logger.lifecycle("\t\t${it.key.value}: ${it.value}") }
+            logger.lifecycle("\t}")
+        }
 
     }
 }
