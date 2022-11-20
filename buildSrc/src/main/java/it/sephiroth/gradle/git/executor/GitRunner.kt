@@ -6,6 +6,7 @@ import org.gradle.api.logging.Logging
 import java.io.IOException
 import java.io.InputStream
 import java.nio.charset.Charset
+import java.util.*
 
 class GitRunner(private val process: Process) : AutoCloseable {
 
@@ -51,7 +52,10 @@ class GitRunner(private val process: Process) : AutoCloseable {
     }
 
     @Throws(IOException::class)
-    fun readLines(type: StdOutput = StdOutput.Output, charset: Charset = Charsets.UTF_8): List<String> {
+    fun readLines(
+        type: StdOutput = StdOutput.Output,
+        charset: Charset = Charsets.UTF_8
+    ): List<String> {
         val stream = when (type) {
             StdOutput.Output -> process.inputStream
             StdOutput.Error -> process.errorStream
@@ -91,6 +95,22 @@ class GitRunner(private val process: Process) : AutoCloseable {
         fun execute(cmd: String): GitRunner {
             logger.quiet("Executing `${cmd.trim()}`...")
             return GitRunner(Runtime.getRuntime().exec(cmd.trim()))
+        }
+
+        @Throws(IOException::class)
+        fun create(command: String): ProcessBuilder {
+            return if (command.isEmpty()) {
+                throw IllegalArgumentException("Empty command")
+            } else {
+                val st = StringTokenizer(command)
+                val cmdArray = arrayOfNulls<String>(st.countTokens())
+                var i = 0
+                while (st.hasMoreTokens()) {
+                    cmdArray[i] = st.nextToken()
+                    ++i
+                }
+                ProcessBuilder(*cmdArray)
+            }
         }
     }
 

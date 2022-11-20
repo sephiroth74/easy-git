@@ -2,8 +2,6 @@ import it.sephiroth.gradle.git.api.Git
 import it.sephiroth.gradle.git.lib.Repository
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.util.Date
-import java.time.LocalDateTime
-import java.time.OffsetDateTime
 
 plugins {
     `kotlin-dsl`
@@ -157,26 +155,20 @@ tasks.create("testGit") {
 
         val commitHash = git.repository.resolve(Repository.HEAD).call().first()
         logger.lifecycle("commit hash => $commitHash")
+        logger.lifecycle("branch name => " + git.branch.name())
 
         logger.lifecycle("rev-list")
-        git.repository.revList().maxCount(1)
-            .tags().call().forEach {
-                logger.lifecycle("\trev-list => $it")
-
-                logger.lifecycle(
-                    "\tdescribe = " + git.repository.describe(it).abbrev(0).tags().call()
-                )
-            }
+        val lastCommit = git.repository.revList().maxCount(1).tags().call().first()
+        logger.lifecycle("\trev-list => $lastCommit")
+        logger.lifecycle("\tdescribe = " + git.repository.describe(lastCommit).abbrev(0).tags().call())
 
         logger.lifecycle("rev-list [previous]")
-        git.repository.revList().maxCount(1).skip(1).tags().call().forEach {
-            logger.lifecycle("\trev-list => $it")
+        val prevCommit = git.repository.revList().maxCount(1).skip(1).tags().call().first()
+        logger.lifecycle("\trev-list => $prevCommit")
+        logger.lifecycle("\tdescribe = " + git.repository.describe(prevCommit).abbrev(0).tags().call())
 
-            logger.lifecycle(
-                "\tdescribe = " + git.repository.describe(it).abbrev(0).tags().call()
-            )
-        }
+        logger.lifecycle("log $lastCommit..$prevCommit")
+        git.log.range(lastCommit, prevCommit).call()
 
-        logger.lifecycle("branch name => " + git.branch.name())
     }
 }
