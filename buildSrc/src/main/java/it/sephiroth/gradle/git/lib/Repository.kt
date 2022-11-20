@@ -10,9 +10,13 @@ class Repository(val repoDir: File) {
 
     fun resolve(commitId: String = HEAD) = GitRevParseCommand(this).commitId(commitId)
 
+    fun revList() = GitRevListCommand(this)
+
     fun lsRemote() = GitLsRemoteCommand(this)
 
     fun checkout() = GitCheckoutCommand(this)
+
+    fun describe(refSpec: String? = null) = GitDescribeCommand(this, refSpec)
 
     companion object {
         const val HEAD: String = "HEAD"

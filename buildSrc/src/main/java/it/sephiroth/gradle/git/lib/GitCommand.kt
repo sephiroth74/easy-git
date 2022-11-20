@@ -1,5 +1,7 @@
 package it.sephiroth.gradle.git.lib
 
+import java.time.OffsetDateTime
+import java.time.format.DateTimeFormatter
 import java.util.concurrent.Callable
 
 abstract class GitCommand<T>(protected val repo: Repository) : Callable<T> {
@@ -33,7 +35,8 @@ abstract class GitCommand<T>(protected val repo: Repository) : Callable<T> {
         }
     }
 
-    internal class GitNameValueParam<T>(name: String, var value: T? = null) : GitNullableParam(name) {
+    internal class GitNameValueParam<T>(name: String, var value: T? = null) :
+        GitNullableParam(name) {
         init {
             isPreset = value != null
         }
@@ -57,6 +60,7 @@ abstract class GitCommand<T>(protected val repo: Repository) : Callable<T> {
                 val list: List<String> = value?.let { queryValue ->
                     when (queryValue) {
                         is GitParam -> fromGitParam(name, queryValue)
+                        is OffsetDateTime -> fromOffsetDateTime(name, queryValue)
                         else -> listOf(name, value.toString())
                     }
                 } ?: run { listOf(name) }
@@ -70,6 +74,10 @@ abstract class GitCommand<T>(protected val repo: Repository) : Callable<T> {
             } ?: run {
                 listOf(name)
             }
+        }
+
+        private fun fromOffsetDateTime(name: String, queryValue: OffsetDateTime): List<String> {
+            return listOf(name, queryValue.format(DateTimeFormatter.ISO_DATE_TIME))
         }
     }
 
