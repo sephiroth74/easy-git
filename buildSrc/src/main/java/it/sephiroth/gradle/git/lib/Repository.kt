@@ -8,6 +8,12 @@ class Repository(val repoDir: File) {
     internal val builder: GsonBuilder = GsonBuilder()
     internal val gson: Gson = builder.create()
 
+    /**
+     * Returns the current commit hash
+     * @param short use the short name
+     */
+    fun commitHash(short: Boolean): String = resolve(Repository.HEAD).apply { if (short) short() }.call().first()
+
     fun resolve(commitId: String = HEAD) = GitRevParseCommand(this).commitId(commitId)
 
     fun revList() = GitRevListCommand(this)
