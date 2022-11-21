@@ -2,16 +2,45 @@ package it.sephiroth.gradle.git.vo
 
 class LogCommit {
     val values: MutableMap<CommitLineType, String?> = mutableMapOf()
+    val tags: List<String> = mutableListOf()
 
-    fun get(type: CommitLineType): String? = values[type]
+    val commitId: String? get() = values[CommitLineType.Commit]
+    val tree: String? get() = values[CommitLineType.Tree]
+    val parent: String? get() = values[CommitLineType.Parent]
+    val subject: String? get() = values[CommitLineType.Subject]
+    val body: String? get() = values[CommitLineType.Body]
 
-    fun set(key: CommitLineType, value: String?) {
-        values[key] = value
+    val author: Author?
+        get() {
+            return values[CommitLineType.Author]?.let { authorName ->
+                Author(
+                    authorName,
+                    values[CommitLineType.Email],
+                    values[CommitLineType.Date]
+                )
+            }
+        }
+
+
+    internal fun set(key: CommitLineType, text: String?) {
+        when (key) {
+            CommitLineType.Tags -> {
+                (tags as MutableList).clear()
+                text?.trimEnd()?.split(",")?.let { splittet ->
+                    tags.addAll(splittet)
+                }
+            }
+            else -> values[key] = text?.trimEnd()
+        }
     }
 
-    fun entries() = values.entries
+    internal fun entries() = values.entries
 
-    fun load(type: String, text: String) = set(CommitLineType.of(type), text)
+    internal fun load(type: String, text: String) {
+        val key = CommitLineType.of(type)
+        set(key, text)
+    }
+
     override fun toString(): String {
         return "LogCommit(${values.map { "${it.key.value}: ${it.value}" }.joinToString(", ")})"
     }
@@ -23,7 +52,8 @@ class LogCommit {
         Subject("subject", "%s"),
         Author("author", "%an"),
         Email("email", "%aE"),
-        Date("date", "%ai"),
+        Date("date", "%aI"),
+        Body("body", "%B"),
         Tags("tags", "%D");
 
         companion object {

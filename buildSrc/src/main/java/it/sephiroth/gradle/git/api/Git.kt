@@ -1,6 +1,7 @@
 package it.sephiroth.gradle.git.api
 
 import it.sephiroth.gradle.git.lib.Repository
+import org.gradle.api.Project
 import org.gradle.api.file.Directory
 import org.gradle.api.logging.Logger
 import org.gradle.api.logging.Logging
@@ -24,13 +25,24 @@ class Git private constructor(
     companion object {
         internal val logger = Logging.getLogger(Git::class.java)
 
+        @Volatile
+        private var instance: Git? = null
+
+        @Synchronized
+        fun get(project: Project): Git {
+            if (null == instance) {
+                instance = Git(Repository(project.rootProject.rootDir))
+            }
+            return instance!!
+        }
+
         fun open(workDir: Directory): Git = open(workDir.asFile)
 
         fun open(workDir: File): Git = Git(Repository(workDir))
 
         const val VERSION: String = "1.0.4-SNAPSHOT"
 
-        const val BUILD_DATE: Long = 1668966222768
+        const val BUILD_DATE: Long = 1668988963921
     }
 }
 

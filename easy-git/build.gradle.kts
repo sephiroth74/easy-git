@@ -171,7 +171,12 @@ tasks.create("testGit") {
 
         git.log.range("735e044", "HEAD").call().forEach { commit ->
             logger.lifecycle("\tLogCommit{")
-            commit.entries().forEach { logger.lifecycle("\t\t${it.key.value}: ${it.value}") }
+            logger.lifecycle("\t\tcommit:  ${commit.commitId}")
+            logger.lifecycle("\t\ttree:    ${commit.tree}")
+            logger.lifecycle("\t\tsubject: ${commit.subject}")
+            logger.lifecycle("\t\tauthor:  ${commit.author}")
+            logger.lifecycle("\t\ttags:    ${commit.tags}")
+            logger.lifecycle("\t\tbody:    ${commit.body}")
             logger.lifecycle("\t}")
         }
 

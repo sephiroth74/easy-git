@@ -21,6 +21,9 @@ class GitLogCommand(repo: Repository) : GitCommand<Iterable<LogCommit>>(repo) {
     private val author = GitNameValueParam<String>("--author")
     private val commmitter = GitNameValueParam<String>("--committer")
 
+    // required for commits parsing
+    private val logSize = GitNameParam("--log-size").set()
+
     private val merges = GitNameParam("--merges")
     private val noMerges = GitNameParam("--no-merges")
     private val reflog = GitNameParam("--reflog")
@@ -53,40 +56,57 @@ class GitLogCommand(repo: Repository) : GitCommand<Iterable<LogCommit>>(repo) {
     override fun call(): Iterable<LogCommit> {
         val paramsBuilder = ParamsBuilder().apply {
             addAll(reflog, maxCount, skip, since, until, author, commmitter, firstParent)
-            addAll(maxParents, minParents, merges, noMerges)
+            addAll(maxParents, minParents, merges, noMerges, logSize)
             add(revisionRange)
         }
 
         val cmd = "git --no-pager log"
-
         val subjects = LogCommit.CommitLineType.values().map { it.value to it.format }
 
         val runners: List<GitRunner> = subjects.mapIndexed { _, pair ->
             val title = pair.first
             val format = pair.second
-            GitRunner.create("$cmd $paramsBuilder --pretty=format:$title:$format", title)
+            GitRunner.create("$cmd $paramsBuilder --pretty=format:$format", title)
         }
 
         val result = hashMapOf<Int, LogCommit>()
+
 
         GitRunner.execute(*runners.toTypedArray())
             .map { it.get() }
             .forEach { runner ->
                 val tag: String = runner.tag as String
-                val regexp =
-                    Pattern.compile("^($tag):(.*)", Pattern.DOTALL).toRegex()
-
-                runner.readLines().mapIndexed { index, line ->
-                    val commit = result.getOrPut(index) { LogCommit() }
-//                    val (type, text) = line.split(":".toRegex(), limit = 2)
-
-                    regexp.matchEntire(line)?.let { match ->
-                        commit.load(tag, match.groupValues[2])
-                    }
+                runner.readText(GitRunner.StdOutput.Output)?.let { logText ->
+                    parseLogsText(tag, logText, result)
+                } ?: run {
+                    // We have a problem
                 }
             }
 
         return result.values
+    }
+
+    private fun parseLogsText(
+        tag: String,
+        logText: String,
+        result: HashMap<Int, LogCommit>
+    ) {
+        var index = 0
+        var commitIndex = 0
+        while (index < logText.length) {
+            val match = logSizeReg.find(logText, index)
+            val range = match!!.range
+            val logSize = match.groupValues[1].toInt()
+            val logMessage = logText.substring(range.last + 1, range.last + 1 + logSize)
+            index = range.last + 1 + logSize
+            val commit = result.getOrPut(commitIndex++) { LogCommit() }
+            commit.load(tag, logMessage)
+        }
+    }
+
+    companion object {
+        private val logSizeReg =
+            Pattern.compile("^log size ([0-9]+)\n", Pattern.MULTILINE).toRegex()
     }
 }
 
