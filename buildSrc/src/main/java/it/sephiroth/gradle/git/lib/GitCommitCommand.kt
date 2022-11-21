@@ -50,7 +50,7 @@ class GitCommitCommand(repo: Repository) : GitCommand<String>(repo) {
     override fun call(): String {
         val paramsBuilder = ParamsBuilder().apply {
             addAll(message, reuseMessage, file)
-            addAll(short, author, allowEmptyMessage, amend)
+            addAll(short, author, allowEmptyMessage, amend, all)
             addAll(quiet, dryRun, porcelain)
         }
 

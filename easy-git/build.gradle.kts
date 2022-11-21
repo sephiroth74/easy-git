@@ -1,4 +1,5 @@
 import it.sephiroth.gradle.git.api.Git
+import it.sephiroth.gradle.git.exception.GitExecutionException
 import it.sephiroth.gradle.git.lib.Repository
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.util.Date
@@ -206,5 +207,14 @@ tasks.create("testGit") {
                 .call()
         )
 
+        logger.lifecycle("Deleting branch 'test.branch'")
+        try {
+            logger.lifecycle("\t" + git.branch.delete("test.branch").force().call())
+        } catch (e: GitExecutionException) {
+            logger.warn("\t" + e.message)
+        }
+
+        logger.lifecycle("Creating a new test tag")
+        logger.lifecycle("\t" + git.tag.add("test.tag.01").message("test tag message").force().call())
     }
 }

@@ -3,6 +3,7 @@ package it.sephiroth.gradle.git.api
 import it.sephiroth.gradle.git.lib.GitFetchCommand
 import it.sephiroth.gradle.git.lib.GitDeleteTagCommand
 import it.sephiroth.gradle.git.lib.GitTagListCommand
+import it.sephiroth.gradle.git.lib.GitTagAddCommand
 
 class GitTag internal constructor(git: Git) : GitApi(git) {
 
@@ -11,6 +12,9 @@ class GitTag internal constructor(git: Git) : GitApi(git) {
     fun delete(name: String) = GitDeleteTagCommand(git.repository, name)
 
     fun list() = GitTagListCommand(git.repository)
+
+    fun add(tagName: String) = GitTagAddCommand(git.repository, tagName)
+
 
 //
 //
