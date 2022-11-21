@@ -1,5 +1,6 @@
 import it.sephiroth.gradle.git.api.Git
 import it.sephiroth.gradle.git.exception.GitExecutionException
+import it.sephiroth.gradle.git.lib.GitPushCommand.PushType
 import it.sephiroth.gradle.git.lib.Repository
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.util.Date
@@ -216,5 +217,8 @@ tasks.create("testGit") {
 
         logger.lifecycle("Creating a new test tag")
         logger.lifecycle("\t" + git.tag.add("test.tag.01").message("test tag message").force().call())
+
+        logger.lifecycle("git push")
+        logger.lifecycle("\t" + git.repository.push().prune().type(PushType.Tags).verbose().call())
     }
 }

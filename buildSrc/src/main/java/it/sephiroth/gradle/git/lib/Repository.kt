@@ -22,6 +22,8 @@ class Repository(val repoDir: File) {
 
     fun commit() = GitCommitCommand(this)
 
+    fun push() = GitPushCommand(this)
+
     companion object {
         const val HEAD: String = "HEAD"
 

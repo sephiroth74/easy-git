@@ -5,7 +5,7 @@ import it.sephiroth.gradle.git.executor.GitRunner
 /**
  * @see <a href="https://git-scm.com/docs/git-push">git-push</a>
  */
-class GitPushCommand(repo: Repository) : GitCommand<List<String>>(repo) {
+class GitPushCommand(repo: Repository) : GitCommand<String>(repo) {
 
     // ----------------------------------------------------
     // region git arguments
@@ -44,7 +44,7 @@ class GitPushCommand(repo: Repository) : GitCommand<List<String>>(repo) {
     }
 
 
-    override fun call(): List<String> {
+    override fun call(): String {
         val paramBuilder = ParamsBuilder().apply {
             add(type)
             add(porcelain)
@@ -52,12 +52,15 @@ class GitPushCommand(repo: Repository) : GitCommand<List<String>>(repo) {
             add(refSpec)
         }
 
-        val cmd = "git push $paramBuilder"
+        val commands = mutableListOf("git", "push").apply {
+            addAll(paramBuilder.toList())
+        }
+
         return GitRunner
-            .execute(cmd)
+            .execute(commands)
             .await()
             .assertNoErrors()
-            .readLines(GitRunner.StdOutput.Output)
+            .readText() ?: ""
 
     }
 
