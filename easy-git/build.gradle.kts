@@ -180,5 +180,31 @@ tasks.create("testGit") {
             logger.lifecycle("\t}")
         }
 
+        logger.lifecycle("git add: ")
+        logger.lifecycle(
+            "\t" + git.repository
+                .add(
+                    File("buildSrc/src/main/java/it/sephiroth/gradle/git/lib/GitAddCommand.kt"),
+                    File("buildSrc/src/main/java/it/sephiroth/gradle/git/api/Git.kt")
+                )
+                .dryRun().ignoreMissing().ignoreErrors().call()
+        )
+
+        logger.lifecycle("list staged files: ")
+        git.diff.fileList().cached().call().forEach { file ->
+            logger.lifecycle("\t$file")
+        }
+
+
+        logger.lifecycle("git commit: ")
+        logger.lifecycle(
+            "\t" + git.repository.commit()
+                .dryRun()
+                .message("This is a test message")
+                .quiet()
+                .all()
+                .call()
+        )
+
     }
 }

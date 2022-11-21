@@ -2,6 +2,7 @@ package it.sephiroth.gradle.git.api
 
 import it.sephiroth.gradle.git.lib.GitRevParseCommand
 import it.sephiroth.gradle.git.lib.GitBranchListCommand
+import it.sephiroth.gradle.git.lib.GitDeleteLocalBranchCommand
 import it.sephiroth.gradle.git.lib.Repository
 
 class GitBranch internal constructor(git: Git) : GitApi(git) {
@@ -18,6 +19,8 @@ class GitBranch internal constructor(git: Git) : GitApi(git) {
     }
 
     fun list() = GitBranchListCommand(git.repository)
+
+    fun delete(branchName: String) = GitDeleteLocalBranchCommand(git.repository, branchName)
 
 //    fun list(listMode: ListMode? = null) = GitExecutor.getBranchList(git.jgit, listMode) ?: emptyList()
 }

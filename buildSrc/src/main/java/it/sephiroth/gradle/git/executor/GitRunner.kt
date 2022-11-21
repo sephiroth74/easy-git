@@ -128,6 +128,12 @@ class GitRunner(
             return GitRunner(Runtime.getRuntime().exec(cmd.trim()))
         }
 
+        @Throws(IOException::class)
+        fun execute(commands: List<String>): GitRunner {
+            logger.quiet("Executing `${commands.joinToString(" ")}`...")
+            return GitRunner(Runtime.getRuntime().exec(commands.toTypedArray()))
+        }
+
         fun execute(vararg processes: GitRunner): Iterable<Future<GitRunner>> {
             return executor.invokeAll(processes.mapIndexed { _, runner ->
                 Callable {

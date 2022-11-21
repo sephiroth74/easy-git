@@ -13,7 +13,6 @@ class Git private constructor(
     private val logger: Logger = Logging.getLogger(Git::class.java)
 
     val branch = GitBranch(this)
-    val commit = GitCommit(this)
     val tag = GitTag(this)
     val diff = GitDiff(this)
     val log = GitLog(this)
@@ -42,7 +41,7 @@ class Git private constructor(
 
         const val VERSION: String = "1.0.4-SNAPSHOT"
 
-        const val BUILD_DATE: Long = 1668988963921
+        const val BUILD_DATE: Long = 1669021916559
     }
 }
 

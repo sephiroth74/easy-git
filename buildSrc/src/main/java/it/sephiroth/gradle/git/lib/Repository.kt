@@ -18,6 +18,10 @@ class Repository(val repoDir: File) {
 
     fun describe(refSpec: String? = null) = GitDescribeCommand(this, refSpec)
 
+    fun add(vararg files: File) = GitAddCommand(this, *files)
+
+    fun commit() = GitCommitCommand(this)
+
     companion object {
         const val HEAD: String = "HEAD"
 

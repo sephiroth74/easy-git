@@ -18,6 +18,10 @@ abstract class GitCommand<T>(protected val repo: Repository) : Callable<T> {
             param?.asQueryString()?.let { array.add(it) }
         }
 
+        fun addAll(values: Iterable<String>) = array.addAll(values)
+
+        fun addAll(vararg values: String) = array.addAll(values)
+
         fun add(value: String) = array.add(value)
 
         fun add(value: String?) = value?.let { add(it) }

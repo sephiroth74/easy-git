@@ -44,8 +44,11 @@ class GitDescribeCommand(repo: Repository, refSpec: String? = null) : GitCommand
             add(pathRefSpec)
         }
 
-        val cmd = "git describe $paramsBuilder"
-        return GitRunner.execute(cmd)
+        val commands = mutableListOf("git", "describe").apply {
+            addAll(paramsBuilder.toList())
+        }
+
+        return GitRunner.execute(commands)
             .await()
             .assertNoErrors()
             .readText(GitRunner.StdOutput.Output) ?: ""
