@@ -48,6 +48,6 @@ class GitTagAddCommand(repo: Repository, private val tagName: String) : GitComma
             addAll(paramsBuilder.toList())
         }
 
-        return GitRunner.execute(commands).await().assertNoErrors().readText() ?: ""
+        return GitRunner.execute(commands, repo.repoDir).await().assertNoErrors().readText() ?: ""
     }
 }

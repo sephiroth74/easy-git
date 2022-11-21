@@ -3,11 +3,13 @@ package it.sephiroth.gradle.git.executor
 import it.sephiroth.gradle.git.exception.GitExecutionException
 import org.gradle.api.logging.Logger
 import org.gradle.api.logging.Logging
+import java.io.File
 import java.io.IOException
 import java.io.InputStream
 import java.nio.charset.Charset
 import java.util.*
 import java.util.concurrent.Callable
+import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
 
@@ -119,19 +121,24 @@ class GitRunner(
 
     companion object {
         private val logger: Logger = Logging.getLogger(GitRunner::class.java)
-        private val executor =
-            Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors())
 
-        @Throws(IOException::class)
-        fun execute(cmd: String): GitRunner {
-            logger.quiet("Executing `${cmd.trim()}`...")
-            return GitRunner(Runtime.getRuntime().exec(cmd.trim()))
+        var numThreads: Int = Runtime.getRuntime().availableProcessors() / 2
+
+        private val executor: ExecutorService by lazy {
+            logger.lifecycle("Using ${numThreads} threads")
+            Executors.newFixedThreadPool(numThreads)
         }
 
         @Throws(IOException::class)
-        fun execute(commands: List<String>): GitRunner {
+        fun execute(cmd: String, workingDir: File): GitRunner {
+            logger.quiet("Executing `${cmd.trim()}`...")
+            return GitRunner(Runtime.getRuntime().exec(cmd.trim(), null, workingDir))
+        }
+
+        @Throws(IOException::class)
+        fun execute(commands: List<String>, workingDir: File): GitRunner {
             logger.quiet("Executing `${commands.joinToString(" ")}`...")
-            return GitRunner(Runtime.getRuntime().exec(commands.toTypedArray()))
+            return GitRunner(Runtime.getRuntime().exec(commands.toTypedArray(), null, workingDir))
         }
 
         fun execute(vararg processes: GitRunner): Iterable<Future<GitRunner>> {
@@ -143,7 +150,7 @@ class GitRunner(
         }
 
         @Throws(IOException::class)
-        fun create(command: String, tag: String? = null): GitRunner {
+        fun create(command: String, tag: String? = null, workingDir: File): GitRunner {
             return if (command.isEmpty()) {
                 throw IllegalArgumentException("Empty command")
             } else {
@@ -154,7 +161,7 @@ class GitRunner(
                     cmdArray[i] = st.nextToken()
                     ++i
                 }
-                GitRunner(ProcessBuilder(*cmdArray), tag)
+                GitRunner(ProcessBuilder(*cmdArray).directory(workingDir), tag)
             }
         }
     }

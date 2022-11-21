@@ -34,7 +34,7 @@ class GitLsRemoteCommand(repo: Repository) : GitCommand<List<String>>(repo) {
         }
         val cmd = "git --no-pager ls-remote --quiet $paramsBuilder"
 
-        return GitRunner.execute(cmd)
+        return GitRunner.execute(cmd, repo.repoDir)
             .await()
             .assertNoErrors()
             .readLines(GitRunner.StdOutput.Output).mapNotNull {

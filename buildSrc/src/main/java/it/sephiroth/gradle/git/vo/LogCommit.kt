@@ -10,6 +10,9 @@ class LogCommit {
     val subject: String? get() = values[CommitLineType.Subject]
     val body: String? get() = values[CommitLineType.Body]
 
+    val sanitizedSubject: String?
+        get() = subject?.replace(Regex("[\\W]+"), "_")
+
     val author: Author?
         get() {
             return values[CommitLineType.Author]?.let { authorName ->

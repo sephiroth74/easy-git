@@ -48,7 +48,7 @@ class GitDescribeCommand(repo: Repository, refSpec: String? = null) : GitCommand
             addAll(paramsBuilder.toList())
         }
 
-        return GitRunner.execute(commands)
+        return GitRunner.execute(commands, repo.repoDir)
             .await()
             .assertNoErrors()
             .readText(GitRunner.StdOutput.Output) ?: ""

@@ -30,7 +30,7 @@ class GitDeleteLocalBranchCommand(repo: Repository, private val branchName: Stri
             addAll(paramsBuilder.toList())
             add(branchName)
         }
-        return GitRunner.execute(commands).await().assertNoErrors().readText() ?: ""
+        return GitRunner.execute(commands, repo.repoDir).await().assertNoErrors().readText() ?: ""
     }
 
 }

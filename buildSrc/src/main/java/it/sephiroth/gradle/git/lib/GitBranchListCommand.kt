@@ -33,7 +33,7 @@ class GitBranchListCommand(repository: Repository) : GitCommand<List<String>>(re
         }
 
         val cmd = "git --no-pager for-each-ref $paramsBuilder"
-        return GitRunner.execute(cmd).await().assertNoErrors().readLines(GitRunner.StdOutput.Output)
+        return GitRunner.execute(cmd, repo.repoDir).await().assertNoErrors().readLines(GitRunner.StdOutput.Output)
     }
 
     enum class BranchMode {

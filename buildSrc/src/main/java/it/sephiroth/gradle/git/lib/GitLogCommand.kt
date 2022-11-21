@@ -66,7 +66,7 @@ class GitLogCommand(repo: Repository) : GitCommand<Iterable<LogCommit>>(repo) {
         val runners: List<GitRunner> = subjects.mapIndexed { _, pair ->
             val title = pair.first
             val format = pair.second
-            GitRunner.create("$cmd $paramsBuilder --pretty=format:$format", title)
+            GitRunner.create("$cmd $paramsBuilder --pretty=format:$format", title, repo.repoDir)
         }
 
         val result = hashMapOf<Int, LogCommit>()

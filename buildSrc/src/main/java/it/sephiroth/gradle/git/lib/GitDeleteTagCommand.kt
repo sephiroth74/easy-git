@@ -10,7 +10,7 @@ class GitDeleteTagCommand(repo: Repository, private val tagName: String) : GitCo
     // endregion git arguments
 
     override fun call(): String {
-        return GitRunner.execute("git tag -d $tagName")
+        return GitRunner.execute("git tag -d $tagName", repo.repoDir)
             .await()
             .assertNoErrors()
             .readText(GitRunner.StdOutput.Output) ?: "Success"

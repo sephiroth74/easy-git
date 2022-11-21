@@ -88,7 +88,7 @@ class GitFetchCommand(repo: Repository) : GitCommand<List<String>>(repo) {
 
         val cmd = "git fetch --progress $paramsBuilder"
 
-        return GitRunner.execute(cmd)
+        return GitRunner.execute(cmd, repo.repoDir)
             .await()
             .assertNoErrors()
             .readLines(GitRunner.StdOutput.Error)

@@ -55,6 +55,6 @@ class GitCommitCommand(repo: Repository) : GitCommand<String>(repo) {
         }
 
         val cmd = mutableListOf("git", "--no-pager", "commit").apply { addAll(paramsBuilder.toList()) }
-        return GitRunner.execute(cmd).await().assertNoErrors().readText() ?: ""
+        return GitRunner.execute(cmd, repo.repoDir).await().assertNoErrors().readText() ?: ""
     }
 }

@@ -24,7 +24,7 @@ class GitCatFileCommand(repo: Repository) : GitCommand<String>(repo) {
         }
 
         val cmd = "git cat-file $paramsBuilder"
-        return GitRunner.execute(cmd)
+        return GitRunner.execute(cmd, repo.repoDir)
             .await()
             .assertNoErrors()
             .readText(GitRunner.StdOutput.Output) ?: ""

@@ -23,7 +23,7 @@ class GitFileListDiffCommand(repository: Repository) : GitCommand<List<String>>(
             addAll(nameOly, cached)
         }
 
-        return GitRunner.execute("git --no-pager diff $paramsBuilder")
+        return GitRunner.execute("git --no-pager diff $paramsBuilder", repo.repoDir)
             .await()
             .assertNoErrors()
             .readLines(GitRunner.StdOutput.Output)

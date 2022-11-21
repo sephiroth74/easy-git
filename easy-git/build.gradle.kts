@@ -1,5 +1,6 @@
 import it.sephiroth.gradle.git.api.Git
 import it.sephiroth.gradle.git.exception.GitExecutionException
+import it.sephiroth.gradle.git.executor.GitRunner
 import it.sephiroth.gradle.git.lib.GitCommand
 import it.sephiroth.gradle.git.lib.GitPushCommand.PushType
 import it.sephiroth.gradle.git.lib.Repository
@@ -152,23 +153,20 @@ tasks.withType<KotlinCompile> {
 
 tasks.create("testGit") {
     doLast {
+        GitRunner.numThreads = 2
         val git = Git.open(rootDir)
         logger.lifecycle("git => $git")
         logger.lifecycle("version = ${Git.VERSION}, buildTime = ${Date(Git.Companion.BUILD_DATE)}")
-
-
         logger.lifecycle("rev-list:     " + git.repository.revList().tags().maxCount(1).call())
-
         val penultimate = git.repository.revList().tags().maxCount(1).skip(1).call().first()
-
         logger.lifecycle("rev-list[-1]: " + penultimate)
         logger.lifecycle("describe:     " + git.repository.describe(penultimate).abbrev(0).tags().call())
 
-
         logger.lifecycle("git diff:")
-        logger.lifecycle("" + git.diff.show().diffFilter("M").commits(GitCommand.RevisionRangeParam.head()).paths(File("easy-git/build.gradle.kt")).call())
+        val lines = git.diff.show().diffFilter("M").commits(GitCommand.RevisionRangeParam.head()).paths(File("buildSrc/src/main/java/it/sephiroth/gradle/git/api/Git.kt")).call().lines()
+        val filter1 = lines.filter { line -> "^[+-].*".toRegex().matches(line) }
 
-        error("stop here")
+        filter1.forEach { logger.lifecycle(it) }
 
         val commitHash = git.repository.resolve(Repository.HEAD).call().first()
         logger.lifecycle("commit hash => $commitHash")
@@ -230,10 +228,10 @@ tasks.create("testGit") {
             logger.warn("\t" + e.message)
         }
 
-        logger.lifecycle("Creating a new test tag")
-        logger.lifecycle("\t" + git.tag.add("test.tag.01").message("test tag message").force().call())
+//        logger.lifecycle("Creating a new test tag")
+//        logger.lifecycle("\t" + git.tag.add("test.tag.01").message("test tag message").force().call())
 
         logger.lifecycle("git push")
-        logger.lifecycle("\t" + git.repository.push().prune().type(PushType.Tags).verbose().call())
+        logger.lifecycle("\t" + git.repository.push().dryRun().prune().type(PushType.Tags).verbose().call())
     }
 }

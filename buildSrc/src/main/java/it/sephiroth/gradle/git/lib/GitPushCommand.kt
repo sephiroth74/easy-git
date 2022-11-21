@@ -57,7 +57,7 @@ class GitPushCommand(repo: Repository) : GitCommand<String>(repo) {
         }
 
         return GitRunner
-            .execute(commands)
+            .execute(commands, repo.repoDir)
             .await()
             .assertNoErrors()
             .readText() ?: ""

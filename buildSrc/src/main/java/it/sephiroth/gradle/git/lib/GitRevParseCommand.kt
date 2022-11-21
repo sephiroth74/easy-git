@@ -35,7 +35,7 @@ class GitRevParseCommand(repository: Repository) : GitCommand<List<String>>(repo
             add(commitId)
         }
 
-        return GitRunner.execute("git --no-pager rev-parse $paramsBuilder")
+        return GitRunner.execute("git --no-pager rev-parse $paramsBuilder", repo.repoDir)
             .await()
             .assertNoErrors()
             .readLines(GitRunner.StdOutput.Output)

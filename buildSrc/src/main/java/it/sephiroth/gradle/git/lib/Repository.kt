@@ -24,7 +24,9 @@ class Repository(val repoDir: File) {
 
     fun describe(refSpec: String? = null) = GitDescribeCommand(this, refSpec)
 
-    fun add(vararg files: File) = GitAddCommand(this, *files)
+    fun add(vararg files: String) = GitAddCommand(this, *files)
+
+    fun add(vararg files: File) = GitAddCommand(this, *files.map { it.name }.toTypedArray())
 
     fun commit() = GitCommitCommand(this)
 
