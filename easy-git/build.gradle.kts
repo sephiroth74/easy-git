@@ -1,5 +1,6 @@
 import it.sephiroth.gradle.git.api.Git
 import it.sephiroth.gradle.git.exception.GitExecutionException
+import it.sephiroth.gradle.git.lib.GitCommand
 import it.sephiroth.gradle.git.lib.GitPushCommand.PushType
 import it.sephiroth.gradle.git.lib.Repository
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
@@ -154,6 +155,20 @@ tasks.create("testGit") {
         val git = Git.open(rootDir)
         logger.lifecycle("git => $git")
         logger.lifecycle("version = ${Git.VERSION}, buildTime = ${Date(Git.Companion.BUILD_DATE)}")
+
+
+        logger.lifecycle("rev-list:     " + git.repository.revList().tags().maxCount(1).call())
+
+        val penultimate = git.repository.revList().tags().maxCount(1).skip(1).call().first()
+
+        logger.lifecycle("rev-list[-1]: " + penultimate)
+        logger.lifecycle("describe:     " + git.repository.describe(penultimate).abbrev(0).tags().call())
+
+
+        logger.lifecycle("git diff:")
+        logger.lifecycle("" + git.diff.show().diffFilter("M").commits(GitCommand.RevisionRangeParam.head()).paths(File("easy-git/build.gradle.kt")).call())
+
+        error("stop here")
 
         val commitHash = git.repository.resolve(Repository.HEAD).call().first()
         logger.lifecycle("commit hash => $commitHash")
