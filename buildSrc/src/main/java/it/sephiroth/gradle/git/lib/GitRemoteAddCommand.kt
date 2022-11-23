@@ -5,7 +5,7 @@ import it.sephiroth.gradle.git.executor.GitRunner
 /**
  * @see <a href="https://git-scm.com/docs/git-remote">git remote</a>
  */
-class GitRemoteRemoveCommand(repo: Repository, private val name: String) : GitCommand<String>(repo) {
+class GitRemoteAddCommand(repo: Repository, private val name: String, private val url: String) : GitCommand<String>(repo) {
 
     // ----------------------------------------------------
     // region git arguments
@@ -13,7 +13,7 @@ class GitRemoteRemoveCommand(repo: Repository, private val name: String) : GitCo
     // endregion git arguments
 
     override fun call(): String {
-        val commands = mutableListOf("git", "remote", "remove", name)
+        val commands = mutableListOf("git", "remote", "add", name, url)
         return GitRunner.execute(commands, repo.repoDir).await().assertNoErrors().readText() ?: ""
     }
 }

@@ -1,8 +1,8 @@
 package it.sephiroth.gradle.git.lib
 
-import it.sephiroth.gradle.git.executor.GitRunner
-import it.sephiroth.gradle.git.lib.GitCatFileCommand
 import it.sephiroth.gradle.git.exception.GitExecutionException
+import it.sephiroth.gradle.git.executor.GitRunner
+import it.sephiroth.gradle.git.utils.EscapedString
 
 /**
  * @see <a href="">git ls-remote</a>
@@ -15,10 +15,15 @@ class GitLsRemoteCommand(repo: Repository) : GitCommand<List<String>>(repo) {
     private val tags = GitNameParam("--tags")
     private val refs = GitNameParam("--refs")
     private val symref = GitNameParam("--symref")
+    private val sort = GitNameValueParam<EscapedString>("--sort")
     private var repository: String? = null
 
     // endregion git arguments
 
+    /**
+     * For instance: --sort="-v:committerdate"
+     */
+    fun sort(value: String) = apply { sort.set(EscapedString(value)) }
     fun heads() = apply { heads.set() }
     fun tags() = apply { tags.set() }
     fun refs() = apply { refs.set() }

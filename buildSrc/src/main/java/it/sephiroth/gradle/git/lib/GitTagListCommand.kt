@@ -1,7 +1,7 @@
 package it.sephiroth.gradle.git.lib
 
 import it.sephiroth.gradle.git.executor.GitRunner
-import it.sephiroth.gradle.git.lib.Repository
+import it.sephiroth.gradle.git.utils.EscapedString
 
 /**
  * @see <a href="https://git-scm.com/docs/git-tag">git-tag</a>
@@ -45,9 +45,11 @@ class GitTagListCommand(repo: Repository) : GitCommand<List<String>>(repo) {
             add(pattern)
         }
 
-        val cmd = "git --no-pager tag -l $paramsBuilder"
+        val commands = mutableListOf("git", "--no-pager", "tag", "-l").apply {
+            addAll(paramsBuilder.toList())
+        }
 
-        return GitRunner.execute(cmd, repo.repoDir)
+        return GitRunner.execute(commands, repo.repoDir)
             .await()
             .assertNoErrors()
             .readLines(GitRunner.StdOutput.Output)

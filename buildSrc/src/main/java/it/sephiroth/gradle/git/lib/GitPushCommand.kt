@@ -18,10 +18,11 @@ class GitPushCommand(repo: Repository) : GitCommand<String>(repo) {
     private val prune = GitNameParam("--prune")
     private val verbose = GitNameParam("--verbose")
     private val setUpstream = GitNameParam("--set-upstream")
-    private val repository = GitNameValueParam<String>("--repo")
     private val pushOption = GitNameValueParam<String>("--push-option")
     private val dryRun = GitNameParam("--dry-run")
-    private var refSpec: String? = null
+    private val atomic = GitNameParam("--atomic")
+    private var refsOrSpecs: String? = null
+    private var repository: String? = null
 
     // endregion git arguments
 
@@ -30,17 +31,17 @@ class GitPushCommand(repo: Repository) : GitCommand<String>(repo) {
     fun prune() = apply { prune.set() }
     fun verbose() = apply { verbose.set() }
     fun setUpstream() = apply { setUpstream.set() }
-    fun repository(value: String) = apply { repository.set(value) }
+    fun repository(value: String) = apply { repository = value }
     fun dryRun() = apply { dryRun.set() }
 
-    fun refSpec(name: String?) = apply {
-        refSpec = name
-        if (null == name) type = null
+    fun refsOrSpecs(name: String?) = apply {
+        refsOrSpecs = name
+        if (null != name) type = null
     }
 
     fun type(value: PushType?) = apply {
         type = value
-        if (null != value) refSpec = null
+        if (null != value) refsOrSpecs = null
     }
 
 
@@ -48,8 +49,9 @@ class GitPushCommand(repo: Repository) : GitCommand<String>(repo) {
         val paramBuilder = ParamsBuilder().apply {
             add(type)
             add(porcelain)
-            addAll(force, delete, prune, verbose, setUpstream, repository, pushOption, dryRun)
-            add(refSpec)
+            addAll(force, delete, prune, verbose, setUpstream, pushOption, dryRun)
+            add(repository)
+            add(refsOrSpecs)
         }
 
         val commands = mutableListOf("git", "push").apply {

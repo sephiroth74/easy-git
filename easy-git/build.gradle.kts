@@ -162,6 +162,24 @@ tasks.create("testGit") {
         logger.lifecycle("rev-list[-1]: " + penultimate)
         logger.lifecycle("describe:     " + git.repository.describe(penultimate).abbrev(0).tags().call())
 
+        println(git.tag.list().sort("-taggerdate").call())
+        git.repository.status()
+            .branch()
+            .pathSpec("buildSrc")
+            .call()
+            .let { status ->
+                println("status: ${status.branch}")
+                status.files.forEach { println(it) }
+            }
+
+        git.remote.list().call().forEach {
+            println("Remote => $it")
+            println("Remote url: " + git.remote.get(it).call())
+        }
+
+        error("ciao")
+
+
         logger.lifecycle("git diff:")
         val lines = git.diff.show().diffFilter("M").commits(GitCommand.RevisionRangeParam.head()).paths(File("buildSrc/src/main/java/it/sephiroth/gradle/git/api/Git.kt")).call().lines()
         val filter1 = lines.filter { line -> "^[+-].*".toRegex().matches(line) }
