@@ -31,6 +31,14 @@ abstract class GitCommand<T>(protected val repo: Repository) : Callable<T> {
         }
 
         fun toList(): List<String> = array.toList()
+
+        companion object {
+            fun of(other: ParamsBuilder): ParamsBuilder {
+                return ParamsBuilder().apply {
+                    this.array.addAll(other.toList())
+                }
+            }
+        }
     }
 
     // ----------------------------------------------------
@@ -60,12 +68,31 @@ abstract class GitCommand<T>(protected val repo: Repository) : Callable<T> {
             Single, Range, Symmetric
         }
 
+        enum class Direction {
+            /**
+             * From remote to local
+             */
+            Left,
+
+            /**
+             * From local to remote
+             */
+            Right
+        }
+
         companion object {
             fun head() = RevisionRangeParam()
             fun from(value: String) = RevisionRangeParam(value, null, RangeType.Single)
             fun range(from: String, to: String) = RevisionRangeParam(from, to, RangeType.Range)
-            fun simmetric(first: String, second: String) =
-                RevisionRangeParam(first, second, RangeType.Symmetric)
+
+            fun simmetric(first: String, second: String) = RevisionRangeParam(first, second, RangeType.Symmetric)
+
+            fun push(direction: Direction) = run {
+                when (direction) {
+                    Direction.Left -> RevisionRangeParam("", "@{push}", RangeType.Range)
+                    Direction.Right -> RevisionRangeParam("@{push}", "", RangeType.Range)
+                }
+            }
         }
     }
 

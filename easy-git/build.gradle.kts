@@ -157,25 +157,10 @@ tasks.create("testGit") {
         val git = Git.open(rootDir)
         logger.lifecycle("git => $git")
         logger.lifecycle("version = ${Git.VERSION}, buildTime = ${Date(Git.Companion.BUILD_DATE)}")
-        logger.lifecycle("rev-list:     " + git.repository.revList().tags().maxCount(1).call())
-        val penultimate = git.repository.revList().tags().maxCount(1).skip(1).call().first()
-        logger.lifecycle("rev-list[-1]: " + penultimate)
-        logger.lifecycle("describe:     " + git.repository.describe(penultimate).abbrev(0).tags().call())
 
-        println(git.tag.list().sort("-taggerdate").call())
-        git.repository.status()
-            .branch()
-            .pathSpec("buildSrc")
-            .call()
-            .let { status ->
-                println("status: ${status.branch}")
-                status.files.forEach { println(it) }
-            }
+        println("Left => " + git.log.count().range(GitCommand.RevisionRangeParam.push(GitCommand.RevisionRangeParam.Direction.Left)).call())
+        println("Right => " + git.log.count().range(GitCommand.RevisionRangeParam.push(GitCommand.RevisionRangeParam.Direction.Right)).call())
 
-        git.remote.list().call().forEach {
-            println("Remote => $it")
-            println("Remote url: " + git.remote.get(it).call())
-        }
 
         error("ciao")
 

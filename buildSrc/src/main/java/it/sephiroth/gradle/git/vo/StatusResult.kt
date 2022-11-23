@@ -50,8 +50,6 @@ data class StatusResult internal constructor(
             lines.forEachIndexed { index, line ->
                 if (index == 0) {
                     branchReg.matchEntire(line)?.let { match ->
-                        println("match: ${match.groupValues}")
-                        println("match: ${match.groups.size}")
                         localBranch = match.groupValues[1]
                         remoteBranch = match.groupValues[3]
                         return@forEachIndexed

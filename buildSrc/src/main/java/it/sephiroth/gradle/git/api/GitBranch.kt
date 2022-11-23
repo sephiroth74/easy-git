@@ -22,5 +22,6 @@ class GitBranch internal constructor(git: Git) : GitApi(git) {
 
     fun delete(branchName: String) = GitDeleteLocalBranchCommand(git.repository, branchName)
 
+
 //    fun list(listMode: ListMode? = null) = GitExecutor.getBranchList(git.jgit, listMode) ?: emptyList()
 }

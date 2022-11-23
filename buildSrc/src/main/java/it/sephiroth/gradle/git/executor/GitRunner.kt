@@ -151,6 +151,7 @@ class GitRunner(
 
         @Throws(IOException::class)
         fun create(command: String, tag: String? = null, workingDir: File): GitRunner {
+            logger.quiet("Creating `$command`...")
             return if (command.isEmpty()) {
                 throw IllegalArgumentException("Empty command")
             } else {
