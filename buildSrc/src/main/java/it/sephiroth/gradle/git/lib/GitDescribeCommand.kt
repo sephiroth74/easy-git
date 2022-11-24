@@ -18,6 +18,7 @@ class GitDescribeCommand(repo: Repository, refSpec: String? = null) : GitCommand
     private val long = GitNameParam("--long")
     private val match = GitNameValueParam<EscapedString>("--match")
     private val exclude = GitNameValueParam<EscapedString>("--exclude")
+    private val firstParent = GitNameParam("--first-parent")
     private var pathRefSpec: String? = refSpec
 
     private val abbrev = GitNameValueParam<Int>("--abbrev")
@@ -25,13 +26,13 @@ class GitDescribeCommand(repo: Repository, refSpec: String? = null) : GitCommand
 
     // endregion git arguments
 
+    fun firstParent() = apply { firstParent.set() }
     fun all() = apply { all.set() }
     fun tags() = apply { tags.set() }
     fun contains() = apply { contains.set() }
     fun exactMatch() = apply { exactMatch.set() }
     fun long() = apply { long.set(); abbrev.unset() }
     fun abbrev(value: Int) = apply { abbrev.set(value); long.unset() }
-
     fun match(value: String?) = apply { match.set(EscapedString(value)) }
     fun exclude(value: String?) = apply { exclude.set(EscapedString(value)) }
     fun candidates(value: Int) = apply { candidates.set(value) }
@@ -39,7 +40,7 @@ class GitDescribeCommand(repo: Repository, refSpec: String? = null) : GitCommand
 
     override fun call(): String {
         val paramsBuilder = ParamsBuilder().apply {
-            addAll(all, tags, contains, exactMatch, long, match, exclude)
+            addAll(all, tags, contains, exactMatch, long, match, exclude, firstParent)
             addAll(abbrev, candidates)
             add(pathRefSpec)
         }
