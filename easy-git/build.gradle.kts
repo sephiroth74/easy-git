@@ -158,83 +158,9 @@ tasks.create("testGit") {
         logger.lifecycle("git => $git")
         logger.lifecycle("version = ${Git.VERSION}, buildTime = ${Date(Git.Companion.BUILD_DATE)}")
 
-        println("Left => " + git.log.count().range(GitCommand.RevisionRangeParam.push(GitCommand.RevisionRangeParam.Direction.Left)).call())
-        println("Right => " + git.log.count().range(GitCommand.RevisionRangeParam.push(GitCommand.RevisionRangeParam.Direction.Right)).call())
 
+        val tag = git.repository.describe().abbrev(0).firstParent().call()
+        println("describe: $tag")
 
-        error("ciao")
-
-
-        logger.lifecycle("git diff:")
-        val lines = git.diff.show().diffFilter("M").commits(GitCommand.RevisionRangeParam.head()).paths(File("buildSrc/src/main/java/it/sephiroth/gradle/git/api/Git.kt")).call().lines()
-        val filter1 = lines.filter { line -> "^[+-].*".toRegex().matches(line) }
-
-        filter1.forEach { logger.lifecycle(it) }
-
-        val commitHash = git.repository.resolve(Repository.HEAD).call().first()
-        logger.lifecycle("commit hash => $commitHash")
-        logger.lifecycle("branch name => " + git.branch.name())
-
-        logger.lifecycle("rev-list")
-        val lastCommit = git.repository.revList().maxCount(1).tags().call().first()
-        logger.lifecycle("\trev-list => $lastCommit")
-        logger.lifecycle("\tdescribe = " + git.repository.describe(lastCommit).abbrev(0).tags().call())
-
-        logger.lifecycle("rev-list [previous]")
-        val prevCommit = git.repository.revList().maxCount(1).skip(1).tags().call().first()
-        logger.lifecycle("\trev-list => $prevCommit")
-        logger.lifecycle("\tdescribe = " + git.repository.describe(prevCommit).abbrev(0).tags().call())
-
-        logger.lifecycle("git log --pretty=oneline 735e044..HEAD")
-
-        git.log.range("735e044", "HEAD").call().forEach { commit ->
-            logger.lifecycle("\tLogCommit{")
-            logger.lifecycle("\t\tcommit:  ${commit.commitId}")
-            logger.lifecycle("\t\ttree:    ${commit.tree}")
-            logger.lifecycle("\t\tsubject: ${commit.subject}")
-            logger.lifecycle("\t\tauthor:  ${commit.author}")
-            logger.lifecycle("\t\ttags:    ${commit.tags}")
-            logger.lifecycle("\t\tbody:    ${commit.body}")
-            logger.lifecycle("\t}")
-        }
-
-        logger.lifecycle("git add: ")
-        logger.lifecycle(
-            "\t" + git.repository
-                .add(
-                    File("buildSrc/src/main/java/it/sephiroth/gradle/git/lib/GitAddCommand.kt"),
-                    File("buildSrc/src/main/java/it/sephiroth/gradle/git/api/Git.kt")
-                )
-                .dryRun().ignoreMissing().ignoreErrors().call()
-        )
-
-        logger.lifecycle("list staged files: ")
-        git.diff.fileList().cached().call().forEach { file ->
-            logger.lifecycle("\t$file")
-        }
-
-
-        logger.lifecycle("git commit: ")
-        logger.lifecycle(
-            "\t" + git.repository.commit()
-                .dryRun()
-                .message("This is a test message")
-                .quiet()
-                .all()
-                .call()
-        )
-
-        logger.lifecycle("Deleting branch 'test.branch'")
-        try {
-            logger.lifecycle("\t" + git.branch.delete("test.branch").force().call())
-        } catch (e: GitExecutionException) {
-            logger.warn("\t" + e.message)
-        }
-
-//        logger.lifecycle("Creating a new test tag")
-//        logger.lifecycle("\t" + git.tag.add("test.tag.01").message("test tag message").force().call())
-
-        logger.lifecycle("git push")
-        logger.lifecycle("\t" + git.repository.push().dryRun().prune().type(PushType.Tags).verbose().call())
     }
 }
