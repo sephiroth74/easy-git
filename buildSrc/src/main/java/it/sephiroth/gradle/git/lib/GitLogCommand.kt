@@ -93,12 +93,29 @@ class GitLogCommand(repo: Repository) : GitCommand<Iterable<LogCommit>>(repo) {
     ) {
         var index = 0
         var commitIndex = 0
-        while (index < logText.length) {
-            val match = logSizeReg.find(logText, index)
-            val range = match!!.range
+
+        var text = logText
+        var byteArray = text.toByteArray(charset = Charsets.UTF_8)
+
+        while (text.isNotEmpty() || byteArray.isNotEmpty()) {
+            val match = logSizeReg.find(text)
+            index++
+            check(index <= INDEX_LIMIT) { "index > $INDEX_LIMIT" }
+
+
+            if (null == match) {
+                break
+            }
+
+            val range = match.range
             val logSize = match.groupValues[1].toInt()
-            val logMessage = logText.substring(range.last + 1, range.last + 1 + logSize)
-            index = range.last + 1 + logSize
+
+            val logMessage = byteArray
+                .copyOfRange(range.last + 1, range.last + 1 + logSize)
+                .toString(Charsets.UTF_8).trim()
+
+            byteArray = byteArray.copyOfRange(range.last + 1 + logSize, byteArray.size)
+            text = byteArray.toString(Charsets.UTF_8)
             val commit = result.getOrPut(commitIndex++) { LogCommit() }
             commit.load(tag, logMessage)
         }
@@ -107,6 +124,8 @@ class GitLogCommand(repo: Repository) : GitCommand<Iterable<LogCommit>>(repo) {
     companion object {
         private val logSizeReg =
             Pattern.compile("^log size ([0-9]+)\n", Pattern.MULTILINE).toRegex()
+
+        const val INDEX_LIMIT = 200
     }
 }
 

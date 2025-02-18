@@ -32,8 +32,8 @@ repositories {
 project.version = projectVersion
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_11
-    targetCompatibility = JavaVersion.VERSION_11
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
     withSourcesJar()
     withJavadocJar()
 }
@@ -89,18 +89,10 @@ tasks.create("updateVersion") {
 
 tasks.withType<KotlinCompile> {
     dependsOn.add("updateVersion")
+    kotlinOptions {
+        apiVersion = "2.1"
+        languageVersion = "2.1"
+        jvmTarget = "21"
+    }
 }
 
-
-
-//
-//tasks.withType<KotlinCompile> {
-//    kotlinOptions {
-//        apiVersion = "1.7"
-//        languageVersion = "1.7"
-//        jvmTarget = "11"
-//    }
-//}
-//
-//// test task //
-//

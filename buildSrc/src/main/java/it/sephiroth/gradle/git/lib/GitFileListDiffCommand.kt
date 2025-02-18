@@ -9,18 +9,17 @@ class GitFileListDiffCommand(repository: Repository) : GitCommand<List<String>>(
     // ----------------------------------------------------
     // region Git arguments
 
-    private val nameOly = GitNameValueParam<Unit>("--name-only").set()
+    private val nameOnly = GitNameValueParam<Unit>("--name-only").set()
     private val cached = GitNameValueParam<Unit>("--cached")
 
     // endregion Git arguments
-
-
     fun cached() = apply { cached.set() }
 
+    fun nameOnly() = apply { nameOnly.set() }
 
     override fun call(): List<String> {
         val paramsBuilder = ParamsBuilder().apply {
-            addAll(nameOly, cached)
+            addAll(nameOnly, cached)
         }
 
         return GitRunner.execute("git --no-pager diff $paramsBuilder", repo.repoDir)

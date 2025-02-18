@@ -40,9 +40,9 @@ class Git private constructor(
 
         fun open(workDir: File): Git = Git(Repository(workDir))
 
-        const val VERSION: String = "1.0.24"
+        const val VERSION: String = "1.0.26-SNAPSHOT"
 
-        const val BUILD_DATE: Long = 1674755043994
+        const val BUILD_DATE: Long = 1739873024657
     }
 }
 
