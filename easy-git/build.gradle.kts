@@ -61,8 +61,8 @@ gradlePlugin {
     }
 }
 
-if (project.hasProperty("sonatypeUsername")
-    && project.hasProperty("sonatypePassword")
+if (project.hasProperty("SONATYPE_TOKEN_USER")
+    && project.hasProperty("SONATYPE_TOKEN_PASSWORD")
     && project.hasProperty("SONATYPE_RELEASE_URL")
     && project.hasProperty("SONATYPE_SNAPSHOT_URL")
 ) {
@@ -115,11 +115,11 @@ if (project.hasProperty("sonatypeUsername")
             maven {
                 url = uri(publishingUrl)
                 credentials {
-                    val sonatypeUsername: String by project
-                    val sonatypePassword: String by project
+                    val SONATYPE_TOKEN_USER: String by project
+                    val SONATYPE_TOKEN_PASSWORD: String by project
 
-                    username = sonatypeUsername
-                    password = sonatypePassword
+                    username = SONATYPE_TOKEN_USER
+                    password = SONATYPE_TOKEN_PASSWORD
                 }
             }
         }
@@ -143,8 +143,8 @@ sourceSets {
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_11
-    targetCompatibility = JavaVersion.VERSION_11
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
     withSourcesJar()
     withJavadocJar()
 }
