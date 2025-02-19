@@ -109,6 +109,7 @@ if (project.hasProperty("SONATYPE_TOKEN_USER")
 
         repositories {
             maven {
+                name = "sonatype"
                 url = uri(publishingUrl)
                 credentials {
                     val SONATYPE_TOKEN_USER: String by project
