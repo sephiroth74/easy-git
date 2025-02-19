@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.util.Properties
 import java.util.regex.Pattern
@@ -40,6 +42,8 @@ java {
 
 dependencies {
     implementation("com.google.code.gson:gson:2.9.1")
+    implementation("com.android.tools.build:gradle-api:8.8.1")
+    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin-api:2.1.10")
     implementation(gradleApi())
 }
 
@@ -87,12 +91,10 @@ tasks.create("updateVersion") {
     }
 }
 
-tasks.withType<KotlinCompile> {
-    dependsOn.add("updateVersion")
-    kotlinOptions {
-        apiVersion = "2.1"
-        languageVersion = "2.1"
-        jvmTarget = "21"
+kotlin {
+    compilerOptions {
+        apiVersion.set(KotlinVersion.KOTLIN_2_1)
+        languageVersion.set(KotlinVersion.KOTLIN_2_1)
+        jvmTarget.set(JvmTarget.JVM_21)
     }
 }
-

@@ -42,7 +42,7 @@ class Git private constructor(
 
         const val VERSION: String = "1.0.26"
 
-        const val BUILD_DATE: Long = 1739875999775
+        const val BUILD_DATE: Long = 1739980980254
     }
 }
 

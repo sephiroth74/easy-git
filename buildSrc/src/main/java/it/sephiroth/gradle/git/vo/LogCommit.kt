@@ -61,7 +61,7 @@ class LogCommit {
 
         companion object {
             fun of(string: String): CommitLineType {
-                return entries.first { it.value == string }
+                return values().first { it.value == string }
             }
         }
     }
