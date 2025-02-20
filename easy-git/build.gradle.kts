@@ -153,7 +153,7 @@ object ProjectUtil {
         val repoUsername = project.findProperty("artifactoryUser") as String
         val repoPassword = project.findProperty("artifactoryPassword") as String
 
-        logger.lifecycle("publishing URL for ${project.name} = $publishingUrl")
+        println("publishing URL for ${project.name} = $publishingUrl")
 
         return Action {
             name = "artifactory"
