@@ -6,3 +6,8 @@ Lightweight gradle git plugin
 # Installation
 
 https://jitpack.io/#sephiroth74/easy-git
+
+# Publishing
+
+    ❯ ./gradlew :easy-git:publishAllPublicationsToSonatypeRepository
+    ❯ ./gradlew :easy-git:publishAllPublicationsToArtifactoryRepository
