@@ -8,7 +8,7 @@ import java.util.concurrent.ExecutionException
 
 plugins {
     `kotlin-dsl`
-    `java-gradle-plugin`
+    java
     signing
     `maven-publish`
 }
