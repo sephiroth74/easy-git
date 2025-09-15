@@ -32,6 +32,8 @@ class GitLogCommand(repo: Repository) : GitCommand<Iterable<LogCommit>>(repo) {
     private val minParents = GitNameValueParam<Int>("--min-parents")
     private val maxParents = GitNameValueParam<Int>("--max-parents")
 
+    private val maxLength = GitNameValueParam<Int>("--max-length")
+
     private var revisionRange = RevisionRangeParam.head()
 
     // endregion git arguments
@@ -50,6 +52,8 @@ class GitLogCommand(repo: Repository) : GitCommand<Iterable<LogCommit>>(repo) {
 
     fun merges() = apply { merges.set(); minParents.unset() }
     fun noMerges() = apply { noMerges.set(); maxParents.unset() }
+
+    fun maxLength(value: Int) = apply { maxLength.set(value) }
 
     fun range(value: RevisionRangeParam) = apply { revisionRange = value }
 
@@ -100,7 +104,7 @@ class GitLogCommand(repo: Repository) : GitCommand<Iterable<LogCommit>>(repo) {
         while (text.isNotEmpty() || byteArray.isNotEmpty()) {
             val match = logSizeReg.find(text)
             index++
-            check(index <= INDEX_LIMIT) { "index > $INDEX_LIMIT" }
+//            check(index <= INDEX_LIMIT) { "index > $INDEX_LIMIT" }
 
 
             if (null == match) {
@@ -110,12 +114,15 @@ class GitLogCommand(repo: Repository) : GitCommand<Iterable<LogCommit>>(repo) {
             val range = match.range
             val logSize = match.groupValues[1].toInt()
 
-            val logMessage = byteArray
+            var logMessage = byteArray
                 .copyOfRange(range.last + 1, range.last + 1 + logSize)
                 .toString(Charsets.UTF_8).trim()
 
-            byteArray = byteArray.copyOfRange(range.last + 1 + logSize, byteArray.size)
-            text = byteArray.toString(Charsets.UTF_8)
+//            byteArray = byteArray.copyOfRange(range.last + 1 + logSize, byteArray.size)
+//            text = byteArray.toString(Charsets.UTF_8)
+            if (maxLength.isPreset) {
+                logMessage = logMessage.take(maxLength.value!!)
+            }
             val commit = result.getOrPut(commitIndex++) { LogCommit() }
             commit.load(tag, logMessage)
         }

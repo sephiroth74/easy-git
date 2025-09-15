@@ -39,7 +39,7 @@ project.group = projectGroupId
 
 dependencies {
     implementation("com.google.code.gson:gson:2.9.1")
-    implementation("com.android.tools.build:gradle-api:8.8.1")
+    implementation("com.android.tools.build:gradle-api:8.13.0")
     implementation("org.jetbrains.kotlin:kotlin-gradle-plugin-api:2.1.10")
     implementation(gradleApi())
 }

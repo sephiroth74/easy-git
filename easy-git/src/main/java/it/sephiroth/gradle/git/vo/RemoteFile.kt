@@ -1,6 +1,6 @@
 package it.sephiroth.gradle.git.vo
 
-import java.util.*
+import java.util.Locale
 
 data class RemoteFile(val type: Type) {
     var tree: String? = null
@@ -13,7 +13,7 @@ data class RemoteFile(val type: Type) {
 
         companion object {
             fun of(value: String): Type {
-                return values().first { it.name.toLowerCase(Locale.ROOT) == value }
+                return values().first { it.name.lowercase(Locale.ROOT) == value }
             }
         }
     }
