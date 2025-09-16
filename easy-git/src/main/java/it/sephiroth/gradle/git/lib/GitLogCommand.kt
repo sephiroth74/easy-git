@@ -104,7 +104,10 @@ class GitLogCommand(repo: Repository) : GitCommand<Iterable<LogCommit>>(repo) {
         while (text.isNotEmpty() || byteArray.isNotEmpty()) {
             val match = logSizeReg.find(text)
             index++
-//            check(index <= INDEX_LIMIT) { "index > $INDEX_LIMIT" }
+            if(index > INDEX_LIMIT) {
+                println("$index > $INDEX_LIMIT!!")
+                break
+            }
 
 
             if (null == match) {
@@ -118,8 +121,8 @@ class GitLogCommand(repo: Repository) : GitCommand<Iterable<LogCommit>>(repo) {
                 .copyOfRange(range.last + 1, range.last + 1 + logSize)
                 .toString(Charsets.UTF_8).trim()
 
-//            byteArray = byteArray.copyOfRange(range.last + 1 + logSize, byteArray.size)
-//            text = byteArray.toString(Charsets.UTF_8)
+            byteArray = byteArray.copyOfRange(range.last + 1 + logSize, byteArray.size)
+            text = byteArray.toString(Charsets.UTF_8)
             if (maxLength.isPreset) {
                 logMessage = logMessage.take(maxLength.value!!)
             }
@@ -132,7 +135,7 @@ class GitLogCommand(repo: Repository) : GitCommand<Iterable<LogCommit>>(repo) {
         private val logSizeReg =
             Pattern.compile("^log size ([0-9]+)\n", Pattern.MULTILINE).toRegex()
 
-        const val INDEX_LIMIT = 200
+        const val INDEX_LIMIT = 20000 // to avoid dead lock on the message parsing
     }
 }
 

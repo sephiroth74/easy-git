@@ -13,8 +13,6 @@ plugins {
     `maven-publish`
 }
 
-val SONATYPE_RELEASE_URL: String by rootProject
-val SONATYPE_SNAPSHOT_URL: String by rootProject
 
 val projectGroupId: String by rootProject
 val projectVersion: String by rootProject
@@ -42,6 +40,13 @@ dependencies {
     implementation("com.android.tools.build:gradle-api:8.13.0")
     implementation("org.jetbrains.kotlin:kotlin-gradle-plugin-api:2.1.10")
     implementation(gradleApi())
+
+    // Test dependencies
+    testImplementation("org.junit.jupiter:junit-jupiter:5.10.0")
+    testImplementation("io.mockk:mockk:1.13.8")
+    testImplementation("org.assertj:assertj-core:3.24.2")
+    testImplementation("org.jetbrains.kotlin:kotlin-test")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 
@@ -61,111 +66,85 @@ kotlin {
     }
 }
 
-
-
-if (project.hasProperty("SONATYPE_TOKEN_USER")
-    && project.hasProperty("SONATYPE_TOKEN_PASSWORD")
-    && project.hasProperty("SONATYPE_RELEASE_URL")
-    && project.hasProperty("SONATYPE_SNAPSHOT_URL")
-) {
-    val publishingUrl =
-        if (projectVersion.endsWith("-SNAPSHOT")) SONATYPE_SNAPSHOT_URL else SONATYPE_RELEASE_URL
-
-    logger.lifecycle("project version: $projectGroupId:$artifactId:${version}")
-    logger.lifecycle("publishing url = $publishingUrl")
-
-    publishing {
-        repositories {
-            maven {
-                name = "sonatype"
-                url = uri(publishingUrl)
-                credentials {
-                    val SONATYPE_TOKEN_USER: String by project
-                    val SONATYPE_TOKEN_PASSWORD: String by project
-
-                    username = SONATYPE_TOKEN_USER
-                    password = SONATYPE_TOKEN_PASSWORD
-                }
-            }
-
-
-            if (localProperties.containsKey("publishingReleaseUrl") && localProperties.containsKey("publishingSnapshotUrl")) {
-                val publishingReleaseUrl: String = localProperties.getProperty("publishingReleaseUrl")
-                val publishingSnapshotUrl: String = localProperties.getProperty("publishingSnapshotUrl")
-                maven(ProjectUtil.artifactory(project, publishingReleaseUrl, publishingSnapshotUrl))
-            }
-
-
-        }
-
-        publications {
-            create<MavenPublication>("pluginMaven") {
-
-                pom {
-                    groupId = projectGroupId
-                    version = version
-
-                    description.set(pomDescription)
-                    url.set(scmUrl)
-                    name.set(project.name)
-
-                    licenses {
-                        license {
-                            name.set(pomLicenseName)
-                            url.set(pomLicenseUrl)
-                        }
-                    }
-
-                    scm {
-                        url.set(scmUrl)
-                        connection.set(scmConnection)
-                        developerConnection.set(scmDeveloperConnection)
-                        tag.set("${project.name}-${project.version}")
-                    }
-
-                    developers {
-                        developer {
-                            id.set(pomDeveloperId)
-                            name.set(pomDeveloperName)
-                            email.set(pomDeveloperEmail)
-                        }
-                    }
-                }
-            }
-        }
-
-        signing {
-            sign(publishing.publications["pluginMaven"])
-        }
-
-        tasks.withType<Sign> {
-            onlyIf { !projectVersion.endsWith("-SNAPSHOT") }
-        }
-    }
+tasks.test {
+    useJUnitPlatform()
 }
 
-object ProjectUtil {
 
-    fun artifactory(project: Project, publishingReleaseUrl: String, publishingSnapshotUrl: String): Action<in MavenArtifactRepository> {
+publishing {
+    repositories {
+        mavenLocal()
+
+        if (localProperties.containsKey("publishingReleaseUrl") && localProperties.containsKey("publishingSnapshotUrl")) {
+            maven(ProjectUtil().artifactory(project))
+        }
+    }
+
+    publications {
+        create<MavenPublication>("pluginMaven") {
+
+            pom {
+                groupId = projectGroupId
+                version = version
+
+                description.set(pomDescription)
+                url.set(scmUrl)
+                name.set(project.name)
+
+                licenses {
+                    license {
+                        name.set(pomLicenseName)
+                        url.set(pomLicenseUrl)
+                    }
+                }
+
+                scm {
+                    url.set(scmUrl)
+                    connection.set(scmConnection)
+                    developerConnection.set(scmDeveloperConnection)
+                    tag.set("${project.name}-${project.version}")
+                }
+
+                developers {
+                    developer {
+                        id.set(pomDeveloperId)
+                        name.set(pomDeveloperName)
+                        email.set(pomDeveloperEmail)
+                    }
+                }
+            }
+        }
+    }
+
+    signing {
+        sign(publishing.publications["pluginMaven"])
+    }
+
+    tasks.withType<Sign> {
+        onlyIf { !projectVersion.endsWith("-SNAPSHOT") }
+    }
+
+}
+
+class ProjectUtil {
+    fun artifactory(project: Project): Action<in MavenArtifactRepository> {
         val isSnapshot = project.version.toString().endsWith("SNAPSHOT")
-        val publishingUrl = if (!isSnapshot) publishingReleaseUrl else publishingSnapshotUrl
 
+        val publishingReleaseUrl: String = localProperties.getProperty("publishingReleaseUrl")
+        val publishingSnapshotUrl: String = localProperties.getProperty("publishingSnapshotUrl")
+        val publishingUrl = if (!isSnapshot) publishingReleaseUrl else publishingSnapshotUrl
         val repoUsername = project.findProperty("artifactoryUser") as String
         val repoPassword = project.findProperty("artifactoryPassword") as String
 
-        println("publishing URL for ${project.name} = $publishingUrl")
-
         return Action {
-            name = "artifactory"
+            project.logger.info("publishing URL for ${project.name} = $publishingUrl")
+            name = "ArtifactoryPublish"
             url = URI.create(publishingUrl)
-
-
-
             credentials {
                 username = repoUsername
                 password = repoPassword
             }
         }
     }
-}
 
+}

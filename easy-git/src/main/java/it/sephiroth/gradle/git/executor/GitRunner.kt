@@ -7,7 +7,7 @@ import java.io.File
 import java.io.IOException
 import java.io.InputStream
 import java.nio.charset.Charset
-import java.util.*
+import java.util.StringTokenizer
 import java.util.concurrent.Callable
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -78,6 +78,9 @@ class GitRunner(
     @Throws(GitExecutionException::class)
     fun assertNoErrors(): GitRunner {
         val exitCode = process.exitValue()
+        if (exitCode != 0) {
+            logger.warn("Git command failed with exit code $exitCode.")
+        }
         assertExitCode(exitCode)
         return this
     }
@@ -125,28 +128,35 @@ class GitRunner(
         var numThreads: Int = Runtime.getRuntime().availableProcessors() / 2
 
         private val executor: ExecutorService by lazy {
-            logger.lifecycle("Using ${numThreads} threads")
+            logger.lifecycle("Using $numThreads threads")
             Executors.newFixedThreadPool(numThreads)
         }
 
         @Throws(IOException::class)
         fun execute(cmd: String, workingDir: File): GitRunner {
             logger.quiet("Executing `${cmd.trim()}`...")
-            return GitRunner(Runtime.getRuntime().exec(cmd.trim(), null, workingDir))
+            return create(cmd, null, workingDir)
         }
 
         @Throws(IOException::class)
         fun execute(commands: List<String>, workingDir: File): GitRunner {
-            logger.quiet("Executing `${commands.joinToString(" ")}`...")
-            return GitRunner(Runtime.getRuntime().exec(commands.toTypedArray(), null, workingDir))
+//            logger.quiet("Executing `${commands.joinToString(" ")}`...")
+            return create(commands, null, workingDir)
         }
 
         fun execute(vararg processes: GitRunner): Iterable<Future<GitRunner>> {
+            logger.quiet("Executing ${processes.size} processes...")
             return executor.invokeAll(processes.mapIndexed { _, runner ->
                 Callable {
                     runner.await().assertNoErrors()
                 }
             })
+        }
+
+        @Throws(IOException::class)
+        fun create(commands: List<String>, tag: String? = null, workingDir: File): GitRunner {
+            logger.quiet("Creating `${commands.joinToString(" ")}`...")
+            return GitRunner(ProcessBuilder(commands).directory(workingDir), tag)
         }
 
         @Throws(IOException::class)

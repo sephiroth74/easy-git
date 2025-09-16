@@ -26,6 +26,5 @@ dependencyResolutionManagement {
 rootProject.name = "Easy Gradle Git"
 
 include(":easy-git")
-//include(":sample")
 
 
